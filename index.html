@@ -39,6 +39,40 @@
         .header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
+            word-break: break-word;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .header p {
+                font-size: 0.95em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .mode-buttons {
+                flex-direction: column;
+            }
+
+            .mode-btn {
+                padding: 12px 15px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .container {
+                margin: 10px;
+            }
         }
 
         .header p {
@@ -443,7 +477,7 @@
                 await addWatermarkToPDF(pdfDoc, watermarkText);
 
                 const pdfBytes = await pdfDoc.save();
-                const fileName = file.name.replace('.pdf', '_watermarked.pdf');
+                const fileName = file.name.replace('.pdf', `_${watermarkText}.pdf`);
                 downloadPDF(pdfBytes, fileName);
             }
 
