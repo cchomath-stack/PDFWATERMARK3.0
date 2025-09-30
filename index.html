@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDFWATERMARK3.0</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .mode-selection {
+            margin-bottom: 30px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .watermark-list {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .watermark-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .watermark-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .remove-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .add-btn {
+            background: #2ed573;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 10px;
+        }
+
+        .process-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .process-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .process-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e1e5e9;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .file-list {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            border-left: 4px solid #667eea;
+        }
+
+        .file-item:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 PDFWATERMARK3.0</h1>
+            <p>복수의 PDF에 워터마크를 추가하거나 하나의 PDF에 여러 워터마크를 적용하세요</p>
+            <p style="font-size: 0.8em; opacity: 0.7; margin-top: 10px;">by.cchomath</p>
+        </div>
+
+        <div class="content">
+            <div class="mode-selection">
+                <h3>작업 모드 선택</h3>
+                <div class="mode-buttons">
+                    <button class="mode-btn active" data-mode="multiple-pdf">
+                        복수 PDF + 같은 워터마크
+                    </button>
+                    <button class="mode-btn" data-mode="single-pdf">
+                        1개 PDF + 복수 워터마크
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode 1: Multiple PDFs, Same Watermark -->
+            <div id="mode-multiple-pdf" class="mode-content">
+                <div class="input-group">
+                    <label for="pdf-files">PDF 파일들 선택 (복수 선택 가능)</label>
+                    <input type="file" id="pdf-files" class="file-input" multiple accept=".pdf">
+                    <div id="pdf-file-list" class="file-list hidden"></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="watermark-text">워터마크 텍스트 (영어만 인식됩니다)</label>
+                    <input type="text" id="watermark-text" placeholder="예: CONFIDENTIAL, SAMPLE, CSM17 등">
+                </div>
+            </div>
+
+            <!-- Mode 2: Single PDF, Multiple Watermarks -->
+            <div id="mode-single-pdf" class="mode-content hidden">
+                <div class="input-group">
+                    <label for="single-pdf-file">PDF 파일 선택</label>
+                    <input type="file" id="single-pdf-file" class="file-input" accept=".pdf">
+                </div>
+
+                <div class="input-group">
+                    <label>워터마크 텍스트들 (영어만 인식됩니다)</label>
+                    <div class="watermark-input-container">
+                        <input type="text" id="new-watermark-text" placeholder="예: CONFIDENTIAL, SAMPLE, CSM17 등">
+                        <button class="add-btn" onclick="addWatermark()">추가</button>
+                    </div>
+                    <div id="watermark-list" class="watermark-list">
+                        <!-- 워터마크 목록이 여기에 표시됩니다 -->
+                    </div>
+                </div>
+            </div>
+
+            <button class="process-btn" onclick="processWatermark()">워터마크 적용</button>
+
+            <div class="progress" id="progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text">처리 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'multiple-pdf';
+        let watermarkTexts = [];
+
+        // 모드 전환
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                currentMode = btn.dataset.mode;
+
+                document.querySelectorAll('.mode-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(`mode-${currentMode}`).classList.remove('hidden');
+            });
+        });
+
+        // 파일 선택 처리
+        document.getElementById('pdf-files').addEventListener('change', function(e) {
+            const fileList = document.getElementById('pdf-file-list');
+            const files = Array.from(e.target.files);
+
+            if (files.length > 0) {
+                fileList.classList.remove('hidden');
+                fileList.innerHTML = files.map(file =>
+                    `<div class="file-item">${file.name}</div>`
+                ).join('');
+            } else {
+                fileList.classList.add('hidden');
+            }
+        });
+
+        // 워터마크 추가
+        function addWatermark() {
+            const input = document.getElementById('new-watermark-text');
+            const text = input.value.trim();
+
+            if (text && !watermarkTexts.includes(text)) {
+                watermarkTexts.push(text);
+                updateWatermarkList();
+                input.value = '';
+            }
+        }
+
+        // 워터마크 제거
+        function removeWatermark(index) {
+            watermarkTexts.splice(index, 1);
+            updateWatermarkList();
+        }
+
+        // 워터마크 목록 업데이트
+        function updateWatermarkList() {
+            const list = document.getElementById('watermark-list');
+            list.innerHTML = watermarkTexts.map((text, index) =>
+                `<div class="watermark-item">
+                    <span>${text}</span>
+                    <button class="remove-btn" onclick="removeWatermark(${index})">제거</button>
+                </div>`
+            ).join('');
+        }
+
+        // Enter 키로 워터마크 추가
+        document.getElementById('new-watermark-text').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addWatermark();
+            }
+        });
+
+        // PDF 처리 함수
+        async function processWatermark() {
+            const progressDiv = document.getElementById('progress');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            const processBtn = document.querySelector('.process-btn');
+
+            try {
+                processBtn.disabled = true;
+                progressDiv.style.display = 'block';
+
+                if (currentMode === 'multiple-pdf') {
+                    await processMultiplePDFs();
+                } else {
+                    await processSinglePDF();
+                }
+
+                progressText.textContent = '완료!';
+
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+                progressText.textContent = '오류 발생';
+            } finally {
+                processBtn.disabled = false;
+                setTimeout(() => {
+                    progressDiv.style.display = 'none';
+                    progressFill.style.width = '0%';
+                }, 2000);
+            }
+        }
+
+        // 복수 PDF 처리
+        async function processMultiplePDFs() {
+            const files = document.getElementById('pdf-files').files;
+            const watermarkText = document.getElementById('watermark-text').value.trim();
+
+            if (files.length === 0 || !watermarkText) {
+                throw new Error('PDF 파일과 워터마크 텍스트를 입력해주세요.');
+            }
+
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                progressText.textContent = `처리 중: ${file.name} (${i + 1}/${files.length})`;
+                progressFill.style.width = `${(i / files.length) * 100}%`;
+
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+                await addWatermarkToPDF(pdfDoc, watermarkText);
+
+                const pdfBytes = await pdfDoc.save();
+                const fileName = file.name.replace('.pdf', '_watermarked.pdf');
+                downloadPDF(pdfBytes, fileName);
+            }
+
+            progressFill.style.width = '100%';
+        }
+
+        // 단일 PDF 처리
+        async function processSinglePDF() {
+            const file = document.getElementById('single-pdf-file').files[0];
+
+            if (!file || watermarkTexts.length === 0) {
+                throw new Error('PDF 파일과 워터마크 텍스트를 입력해주세요.');
+            }
+
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+
+            const arrayBuffer = await file.arrayBuffer();
+
+            for (let i = 0; i < watermarkTexts.length; i++) {
+                const watermarkText = watermarkTexts[i];
+                progressText.textContent = `처리 중: ${watermarkText} (${i + 1}/${watermarkTexts.length})`;
+                progressFill.style.width = `${(i / watermarkTexts.length) * 100}%`;
+
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                await addWatermarkToPDF(pdfDoc, watermarkText);
+
+                const pdfBytes = await pdfDoc.save();
+                const fileName = file.name.replace('.pdf', `_${watermarkText}.pdf`);
+                downloadPDF(pdfBytes, fileName);
+            }
+
+            progressFill.style.width = '100%';
+        }
+
+        // 한글 폰트 캐시
+        let koreanFont = null;
+
+        // 한글 폰트 로드 함수
+        async function loadKoreanFont(pdfDoc) {
+            if (koreanFont) return koreanFont;
+
+            try {
+                // 여러 폰트 URL 시도
+                const fontUrls = [
+                    'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/S-CoreDream-3Light.woff',
+                    'https://fonts.gstatic.com/ea/notosanskr/v2/NotoSansKR-Regular.woff2',
+                    'https://cdn.rawgit.com/moonspam/NanumSquare/master/nanumsquare/nanumSquareRegular.woff'
+                ];
+
+                for (const url of fontUrls) {
+                    try {
+                        console.log(`폰트 로딩 시도: ${url}`);
+                        const response = await fetch(url, { mode: 'cors' });
+                        if (response.ok) {
+                            const fontBytes = await response.arrayBuffer();
+                            koreanFont = await pdfDoc.embedFont(fontBytes);
+                            console.log('한글 폰트 로딩 성공');
+                            return koreanFont;
+                        }
+                    } catch (error) {
+                        console.warn(`폰트 로딩 실패: ${url}`, error);
+                        continue;
+                    }
+                }
+
+                // 모든 외부 폰트 실패시 기본 폰트 사용
+                console.log('외부 폰트 로딩 실패, 기본 폰트 사용');
+                koreanFont = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+                return koreanFont;
+
+            } catch (error) {
+                console.error('폰트 로딩 중 오류:', error);
+                koreanFont = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+                return koreanFont;
+            }
+        }
+
+        // 텍스트가 한글인지 확인
+        function hasKorean(text) {
+            return /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(text);
+        }
+
+        // 한글을 영어로 변환하는 함수 (더 포괄적)
+        function convertKoreanToEnglish(text) {
+            // 완전한 단어 매핑 (우선순위)
+            const completeWordMapping = {
+                '씨에스엠17': 'CSM17',
+                '기밀': 'CONFIDENTIAL',
+                '기밀문서': 'CONFIDENTIAL',
+                '샘플': 'SAMPLE',
+                '테스트': 'TEST',
+                '회사': 'COMPANY',
+                '문서': 'DOCUMENT',
+                '복사금지': 'DO_NOT_COPY',
+                '임시': 'DRAFT',
+                '초안': 'DRAFT',
+                '내부용': 'INTERNAL_USE'
+            };
+
+            // 완전 일치하는 경우
+            if (completeWordMapping[text]) {
+                return completeWordMapping[text];
+            }
+
+            // 개별 글자 매핑
+            const charMapping = {
+                '가': 'GA', '나': 'NA', '다': 'DA', '라': 'RA', '마': 'MA', '바': 'BA', '사': 'SA', '아': 'A', '자': 'JA', '차': 'CHA', '카': 'KA', '타': 'TA', '파': 'PA', '하': 'HA',
+                '갑': 'GAB', '을': 'EUL', '병': 'BYEONG', '정': 'JEONG', '무': 'MU', '기': 'GI', '경': 'GYEONG', '신': 'SIN', '임': 'IM', '계': 'GYE',
+                '씨': 'C', '에': 'S', '스': 'S', '엠': 'M', '이': 'I', '오': 'O', '우': 'U', '어': 'EO', '으': 'EU',
+                '김': 'KIM', '이': 'LEE', '박': 'PARK', '최': 'CHOI', '정': 'JUNG', '강': 'KANG', '조': 'CHO', '윤': 'YOON', '장': 'JANG', '임': 'LIM',
+                '회': 'HOE', '동': 'DONG', '남': 'NAM', '서': 'SEO', '북': 'BUK', '중': 'JUNG', '대': 'DAE', '소': 'SO', '고': 'GO', '저': 'JEO',
+                '한': 'HAN', '국': 'GUK', '민': 'MIN', '주': 'JU', '공': 'GONG', '화': 'HWA', '개': 'GAE', '발': 'BAL', '연': 'YEON', '구': 'GU'
+            };
+
+            // 글자별로 변환
+            let result = '';
+            for (let char of text) {
+                if (/[가-힣]/.test(char)) {
+                    result += charMapping[char] || char.charCodeAt(0).toString(16).toUpperCase();
+                } else {
+                    result += char;
+                }
+            }
+
+            return result;
+        }
+
+        // 한글 처리: 한글이 안되면 영어로 변환
+        function getDisplayText(originalText) {
+            // 한글을 영어로 변환하는 매핑
+            const koreanMapping = {
+                '씨에스엠17': 'CSM17',
+                '씨에스엠': 'CSM',
+                '기밀': 'CONFIDENTIAL',
+                '기밀문서': 'CONFIDENTIAL DOCUMENT',
+                '샘플': 'SAMPLE',
+                '테스트': 'TEST',
+                '회사': 'COMPANY',
+                '문서': 'DOCUMENT',
+                '복사금지': 'DO NOT COPY',
+                '임시': 'DRAFT',
+                '초안': 'DRAFT',
+                '내부용': 'INTERNAL USE',
+                '비밀': 'SECRET',
+                '중요': 'IMPORTANT'
+            };
+
+            // 완전 매칭 우선
+            if (koreanMapping[originalText]) {
+                return koreanMapping[originalText];
+            }
+
+            // 한글이 포함되어 있으면 글자별 변환
+            if (hasKorean(originalText)) {
+                const charMapping = {
+                    '씨': 'C', '에': 'S', '스': 'S', '엠': 'M',
+                    '가': 'GA', '나': 'NA', '다': 'DA', '라': 'RA', '마': 'MA',
+                    '바': 'BA', '사': 'SA', '아': 'A', '자': 'JA', '차': 'CHA',
+                    '카': 'KA', '타': 'TA', '파': 'PA', '하': 'HA',
+                    '김': 'KIM', '이': 'LEE', '박': 'PARK', '최': 'CHOI',
+                    '정': 'JUNG', '강': 'KANG', '조': 'CHO', '윤': 'YOON',
+                    '한': 'HAN', '국': 'GUK', '대': 'DAE', '학': 'HAK'
+                };
+
+                let result = '';
+                for (let char of originalText) {
+                    if (/[가-힣]/.test(char)) {
+                        result += charMapping[char] || char.charCodeAt(0).toString().slice(-2);
+                    } else {
+                        result += char;
+                    }
+                }
+                return result;
+            }
+
+            return originalText;
+        }
+
+        // PDF에 워터마크 추가
+        async function addWatermarkToPDF(pdfDoc, watermarkText) {
+            console.log('원본 워터마크 텍스트:', watermarkText);
+            const pages = pdfDoc.getPages();
+            console.log('페이지 수:', pages.length);
+
+            // 한글을 영어로 변환 (한글 폰트가 안되므로)
+            const actualWatermarkText = getDisplayText(watermarkText);
+            console.log('최종 워터마크 텍스트:', actualWatermarkText);
+
+            // 항상 기본 폰트 사용 (확실한 방법)
+            const font = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+            for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+                const page = pages[pageIndex];
+                const { width, height } = page.getSize();
+                console.log(`페이지 ${pageIndex + 1} 크기: ${width}x${height}`);
+
+                // 폰트 크기와 간격 조정 (겹침 문제 해결)
+                const fontSize = Math.min(width, height) / 15; // 폰트 크기 줄임
+
+                // 텍스트 길이에 따른 동적 간격 계산
+                const textWidth = actualWatermarkText.length * fontSize * 0.6; // 대략적인 텍스트 너비
+                const minSpacing = textWidth + fontSize; // 최소 간격 = 텍스트 너비 + 여백
+                const spacingX = Math.max(minSpacing, fontSize * 5); // X축 간격
+                const spacingY = Math.max(minSpacing * 0.7, fontSize * 3); // Y축 간격 (더 조밀하게)
+
+                console.log('최종 워터마크 텍스트:', actualWatermarkText);
+                console.log('폰트 크기:', fontSize);
+                console.log('텍스트 예상 너비:', textWidth);
+                console.log('X축 간격:', spacingX, 'Y축 간격:', spacingY);
+
+                let textCount = 0;
+
+                // 시작점을 조정하여 더 균등하게 배치
+                const startX = -textWidth;
+                const startY = -fontSize;
+
+                for (let x = startX; x < width + textWidth; x += spacingX) {
+                    for (let y = startY; y < height + fontSize; y += spacingY) {
+                        try {
+                            page.drawText(actualWatermarkText, {
+                                x: x,
+                                y: y,
+                                size: fontSize,
+                                font: font,
+                                color: PDFLib.rgb(0.8, 0.8, 0.8), // 더 연하게
+                                opacity: 0.3, // 더 연하게
+                                rotate: PDFLib.degrees(-45),
+                            });
+                            textCount++;
+                        } catch (textError) {
+                            console.warn('텍스트 그리기 실패:', textError);
+                            console.warn('실패한 텍스트:', actualWatermarkText);
+                        }
+                    }
+                }
+                console.log(`페이지 ${pageIndex + 1}에 ${textCount}개 워터마크 추가됨`);
+            }
+        }
+
+        // PDF 다운로드
+        function downloadPDF(pdfBytes, fileName) {
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
